@@ -327,7 +327,7 @@
   <div class="d-foot" id="foot">
     <div class="total"><span>Total</span><b id="total">0 EGP</b></div>
     <button class="checkout" id="checkout" type="button">Checkout</button>
-    <p class="note">Next, we'll ask for your name and delivery address.</p>
+    <p class="note">Next, we'll ask for your name and open WhatsApp.</p>
   </div>
 </aside>
 
@@ -335,16 +335,11 @@
   <form class="ask" id="askForm" novalidate>
     <button class="x ask-x" type="button" id="askClose" aria-label="Back to cart">×</button>
     <div class="eyebrow">Almost done</div>
-    <h3 id="askTitle">Who should we deliver to?</h3>
+    <h3 id="askTitle">What's your name?</h3>
     <div class="q">
-      <label for="cName">What's your name?</label>
-      <input id="cName" autocomplete="name" placeholder="Your full name" required>
+      <label for="cName">So we know who the order is from.</label>
+      <input id="cName" autocomplete="given-name" placeholder="Your name" required>
       <small class="err" id="errName">Please tell us your name.</small>
-    </div>
-    <div class="q">
-      <label for="cAddr">Where should we deliver your order?</label>
-      <textarea id="cAddr" rows="3" autocomplete="street-address" placeholder="City, area, street, building, apartment" required></textarea>
-      <small class="err" id="errAddr">Please add your delivery address.</small>
     </div>
     <div class="ask-sum"><span id="askCount"></span><b id="askTotal"></b></div>
     <button class="checkout" type="submit">
@@ -548,7 +543,6 @@ itemsEl.addEventListener("change",e=>{ if(e.target.matches("select")) setSize(+e
 /* ===== WhatsApp checkout ===== */
 function orderMessage(){
   const name = document.getElementById("cName").value.trim();
-  const addr = document.getElementById("cAddr").value.trim();
   let m = "Hello Yozevia! I'd like to place an order:\n\n";
   cart.forEach((l,i)=>{
     const p = prod(l.id), pr = p.sizes[l.size];
@@ -556,37 +550,34 @@ function orderMessage(){
   });
   m += `\nTotal: ${fmt(total())}\n`;
   m += `\nName: ${name}`;
-  m += `\nDelivery address: ${addr}`;
   m += `\n\nPlease confirm my order. Thank you!`;
   return m;
 }
 const waLink = text => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 function updateCheckout(){}
 
-/* Checkout: ask for name + address in a popup, then open WhatsApp */
+/* Checkout: ask for the customer's name in a popup, then open WhatsApp */
 const ask = document.getElementById("ask"), askForm = document.getElementById("askForm");
-const cName = document.getElementById("cName"), cAddr = document.getElementById("cAddr");
+const cName = document.getElementById("cName");
 const DKEY = "yozevia_customer_v1";
-try { const d = JSON.parse(localStorage.getItem(DKEY)) || {}; cName.value = d.name || ""; cAddr.value = d.addr || ""; } catch(e){}
+try { const d = JSON.parse(localStorage.getItem(DKEY)) || {}; cName.value = d.name || ""; if(d.addr){ delete d.addr; localStorage.setItem(DKEY, JSON.stringify(d)); } } catch(e){}
 function openAsk(){
   if(!count()) return;
   document.getElementById("askCount").textContent = `${count()} item${count()>1?"s":""} · Total`;
   document.getElementById("askTotal").textContent = fmt(total());
   askForm.querySelectorAll(".q").forEach(q=>q.classList.remove("bad"));
   ask.classList.add("open"); ask.setAttribute("aria-hidden","false");
-  setTimeout(()=> (cName.value.trim() ? cAddr : cName).focus(), 150);
+  setTimeout(()=> cName.focus(), 150);
 }
 function closeAsk(){ ask.classList.remove("open"); ask.setAttribute("aria-hidden","true"); }
 document.getElementById("checkout").addEventListener("click", openAsk);
 document.getElementById("askClose").addEventListener("click", closeAsk);
 ask.addEventListener("click", e=>{ if(e.target===ask) closeAsk(); });
-[cName,cAddr].forEach(f=>f.addEventListener("input",()=>{ if(f.value.trim()) f.closest(".q").classList.remove("bad"); }));
+cName.addEventListener("input",()=>{ if(cName.value.trim()) cName.closest(".q").classList.remove("bad"); });
 askForm.addEventListener("submit", e=>{
   e.preventDefault();
-  let firstBad = null;
-  [cName,cAddr].forEach(f=>{ const bad = !f.value.trim(); f.closest(".q").classList.toggle("bad", bad); if(bad && !firstBad) firstBad = f; });
-  if(firstBad){ firstBad.focus(); return; }
-  try { localStorage.setItem(DKEY, JSON.stringify({name:cName.value.trim(), addr:cAddr.value.trim()})); } catch(e){}
+  if(!cName.value.trim()){ cName.closest(".q").classList.add("bad"); cName.focus(); return; }
+  try { localStorage.setItem(DKEY, JSON.stringify({name:cName.value.trim()})); } catch(e){}
   const url = waLink(orderMessage());
   const w = window.open(url, "_blank", "noopener");
   if(!w) location.href = url;
