@@ -168,6 +168,25 @@
   .checkout svg{width:20px;height:20px}
   .note{font-size:12px;color:var(--ink-soft);text-align:center;margin-top:10px}
 
+  /* Checkout question popup */
+  .ask-wrap{position:fixed;inset:0;z-index:80;background:rgba(23,19,15,.55);display:grid;place-items:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+  .ask-wrap.open{opacity:1;pointer-events:auto}
+  .ask{position:relative;background:var(--paper);width:min(460px,100%);padding:36px 32px 28px;box-shadow:0 30px 80px rgba(0,0,0,.3);transform:translateY(16px);transition:transform .3s;max-height:100%;overflow-y:auto}
+  .ask-wrap.open .ask{transform:none}
+  .ask-x{position:absolute;top:12px;right:14px}
+  .ask .eyebrow{margin-bottom:8px}
+  .ask h3{font-family:var(--serif);font-weight:500;font-size:32px;line-height:1.1;margin-bottom:22px}
+  .q{margin-bottom:16px}
+  .q label{display:block;font-family:var(--serif);font-size:20px;margin-bottom:8px}
+  .q input,.q textarea{font:inherit;font-size:15px;width:100%;padding:12px 14px;border:1px solid var(--line);background:var(--white);color:var(--ink);resize:none}
+  .q input:focus,.q textarea:focus{outline:none;border-color:var(--gold-deep)}
+  .q .err{display:none;color:#a23b2a;font-size:13px;margin-top:6px}
+  .q.bad input,.q.bad textarea{border-color:#a23b2a}
+  .q.bad .err{display:block}
+  .ask-sum{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding:14px 0 16px;margin-top:4px}
+  .ask-sum span{font-size:13px;color:var(--ink-soft)}
+  .ask-sum b{font-family:var(--serif);font-size:26px;font-weight:500}
+
   .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,120px);background:var(--ink);color:var(--paper);padding:14px 22px;font-size:14px;z-index:70;transition:transform .35s;display:flex;gap:16px;align-items:center}
   .toast.show{transform:translate(-50%,0)}
   .toast button{color:var(--gold);font-size:12px;letter-spacing:.18em;text-transform:uppercase}
@@ -306,20 +325,35 @@
   </div>
   <div class="d-items" id="items"></div>
   <div class="d-foot" id="foot">
-    <div class="fields">
-      <label for="cName">Your name (optional)</label>
-      <input id="cName" autocomplete="name" placeholder="Name">
-      <label for="cAddr">Delivery area / address (optional)</label>
-      <textarea id="cAddr" rows="2" autocomplete="street-address" placeholder="City, area, street"></textarea>
-    </div>
     <div class="total"><span>Total</span><b id="total">0 EGP</b></div>
-    <a class="checkout" id="checkout" href="#" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.6-.5-1-1.1-1.4-1.8-.1-.2 0-.4.1-.5l.4-.5.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.6.6-.9 1.4-.9 2.2.1 1 .4 1.9 1 2.7 1.1 1.6 2.5 2.9 4.2 3.7.5.2 1.6.6 2.2.5.6 0 1.4-.6 1.7-1.2.1-.4.1-.8 0-1.1l-.4-.3Z"/></svg>
-      Checkout on WhatsApp
-    </a>
-    <p class="note">You'll review the message in WhatsApp before sending.</p>
+    <button class="checkout" id="checkout" type="button">Checkout</button>
+    <p class="note">Next, we'll ask for your name and delivery address.</p>
   </div>
 </aside>
+
+<div class="ask-wrap" id="ask" role="dialog" aria-modal="true" aria-labelledby="askTitle" aria-hidden="true">
+  <form class="ask" id="askForm" novalidate>
+    <button class="x ask-x" type="button" id="askClose" aria-label="Back to cart">×</button>
+    <div class="eyebrow">Almost done</div>
+    <h3 id="askTitle">Who should we deliver to?</h3>
+    <div class="q">
+      <label for="cName">What's your name?</label>
+      <input id="cName" autocomplete="name" placeholder="Your full name" required>
+      <small class="err" id="errName">Please tell us your name.</small>
+    </div>
+    <div class="q">
+      <label for="cAddr">Where should we deliver your order?</label>
+      <textarea id="cAddr" rows="3" autocomplete="street-address" placeholder="City, area, street, building, apartment" required></textarea>
+      <small class="err" id="errAddr">Please add your delivery address.</small>
+    </div>
+    <div class="ask-sum"><span id="askCount"></span><b id="askTotal"></b></div>
+    <button class="checkout" type="submit">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.6-.5-1-1.1-1.4-1.8-.1-.2 0-.4.1-.5l.4-.5.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.6.6-.9 1.4-.9 2.2.1 1 .4 1.9 1 2.7 1.1 1.6 2.5 2.9 4.2 3.7.5.2 1.6.6 2.2.5.6 0 1.4-.6 1.7-1.2.1-.4.1-.8 0-1.1l-.4-.3Z"/></svg>
+      Send order on WhatsApp
+    </button>
+    <p class="note">You'll review the message in WhatsApp before sending.</p>
+  </form>
+</div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastTxt"></span><button id="toastView">View cart</button></div>
 
@@ -521,14 +555,43 @@ function orderMessage(){
     m += `${i+1}. ${p.name} (${l.size}) x ${l.qty} = ${fmt(pr*l.qty)}\n`;
   });
   m += `\nTotal: ${fmt(total())}\n`;
-  if(name) m += `\nName: ${name}`;
-  if(addr) m += `\nDelivery: ${addr}`;
+  m += `\nName: ${name}`;
+  m += `\nDelivery address: ${addr}`;
   m += `\n\nPlease confirm my order. Thank you!`;
   return m;
 }
 const waLink = text => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-function updateCheckout(){ document.getElementById("checkout").href = waLink(orderMessage()); }
-["cName","cAddr"].forEach(id=>document.getElementById(id).addEventListener("input",updateCheckout));
+function updateCheckout(){}
+
+/* Checkout: ask for name + address in a popup, then open WhatsApp */
+const ask = document.getElementById("ask"), askForm = document.getElementById("askForm");
+const cName = document.getElementById("cName"), cAddr = document.getElementById("cAddr");
+const DKEY = "yozevia_customer_v1";
+try { const d = JSON.parse(localStorage.getItem(DKEY)) || {}; cName.value = d.name || ""; cAddr.value = d.addr || ""; } catch(e){}
+function openAsk(){
+  if(!count()) return;
+  document.getElementById("askCount").textContent = `${count()} item${count()>1?"s":""} · Total`;
+  document.getElementById("askTotal").textContent = fmt(total());
+  askForm.querySelectorAll(".q").forEach(q=>q.classList.remove("bad"));
+  ask.classList.add("open"); ask.setAttribute("aria-hidden","false");
+  setTimeout(()=> (cName.value.trim() ? cAddr : cName).focus(), 150);
+}
+function closeAsk(){ ask.classList.remove("open"); ask.setAttribute("aria-hidden","true"); }
+document.getElementById("checkout").addEventListener("click", openAsk);
+document.getElementById("askClose").addEventListener("click", closeAsk);
+ask.addEventListener("click", e=>{ if(e.target===ask) closeAsk(); });
+[cName,cAddr].forEach(f=>f.addEventListener("input",()=>{ if(f.value.trim()) f.closest(".q").classList.remove("bad"); }));
+askForm.addEventListener("submit", e=>{
+  e.preventDefault();
+  let firstBad = null;
+  [cName,cAddr].forEach(f=>{ const bad = !f.value.trim(); f.closest(".q").classList.toggle("bad", bad); if(bad && !firstBad) firstBad = f; });
+  if(firstBad){ firstBad.focus(); return; }
+  try { localStorage.setItem(DKEY, JSON.stringify({name:cName.value.trim(), addr:cAddr.value.trim()})); } catch(e){}
+  const url = waLink(orderMessage());
+  const w = window.open(url, "_blank", "noopener");
+  if(!w) location.href = url;
+  closeAsk();
+});
 document.getElementById("waFooter").href = waLink("Hello Yozevia! I have a question about your fragrances.");
 
 /* ===== Drawer + toast ===== */
@@ -539,7 +602,7 @@ document.getElementById("openCart").onclick = openCart;
 document.getElementById("floatCart").onclick = openCart;
 document.getElementById("closeCart").onclick = closeCart;
 overlay.onclick = closeCart;
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeCart(); });
+document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(ask.classList.contains("open")) closeAsk(); else closeCart(); });
 let tt;
 function toast(msg){
   const t = document.getElementById("toast");
